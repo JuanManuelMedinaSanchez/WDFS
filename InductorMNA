@@ -10,4 +10,90 @@
     capacitors and inductors (linear components). 
  */
  
- 
+class TwoPortInductorUnitElement {
+public:
+  TwoPortInductorUnitElement(std::vector<double> L, int n, std::string topology) : L(L), n(n), topology(topology), H(0), Cp(0), Rp(0), 
+  Z(0), Y(0), nl(0), v1(0), v2(0), i1(0), i2(0), A(0), B(0), a(0), b(0), psi(0), z(0), V1(0), I1(0), V2(0), I2(0) {}
+  void setTransferFunction(std::complex<double> H) {
+    this->H = H;
+  }
+  void setParasiticCapacitance(double Cp) {
+    this->Cp = Cp;
+  }
+  void setParasiticResistance(double Rp) {
+    this->Rp = Rp;
+  }
+  void setImpedance() {
+    Z = 0;
+    if (topology == "series") {
+      Z = 2 * L[0] + Cp; 
+      for (int i = 1; i < n; i++) {
+        Z += 2 * L[i] + Cp;
+      }
+    } else if (topology == "parallel") {
+      Z = 2 * L[0] + Rp;
+      for (int i = 1; i < n; i++) {
+        Z += 2 * L[i] + Rp;
+      }
+    }
+  }
+  void setAdmittance() {
+    Y = 0;
+    if (topology == "series") {
+      Y = 1 / (2 * L[0]); // Take into account the parasitic capacitance
+      for (int i = 1; i < n; i++) {
+        Y += 1 / (2 * L[i]);
+      }
+    } else if (topology == "parallel") {
+      Y = 1 / (2 * L[0] + Cp); // Take into account the parasitic resistance
+      for (int i = 1; i < n; i++) {
+        Y += 1 / (2 * L[i] + Cp);
+      }
+    }
+  }
+  void setWaveformScatteringFunction(std::array<std::complex<double>, 4> k) {
+    this->k = k;
+  }
+
+  // Set the nonlinearity coefficient
+  void setNonlinearityCoefficient(double nl) {
+    this->nl = nl;
+  }
+
+  // Calculate the input and output waveforms
+  void calcInputOutputWaveforms(std::complex<double> V2, std::complex<double> I2) {
+    v1 = k[0] * V2 - k[1] * I2;
+    i1 = k[2] * V2 - k[3] * I2;
+    v2 = v1;
+    i2 = (v2 - v1) / Z;
+  }
+  // Calculate the steady-state waves, scattering and reflection functions, and transmittance
+  void calcSteadyStateQuantities() {
+    A = V1 + Z * I1;
+    B = V2 - Z * I2;
+    a = (A + B) / 2;
+    b = (A - B) / 2;  
+    K = {a, b, b, a};
+    psi = (z - 1) / (z + 1);
+  }
+private:
+  std::vector<double> L;
+  int n;
+  std::string topology;
+  std::complex<double> H;
+  double Cp;
+  double Rp;
+  double Z;
+  double Y;
+  std::array<std::complex<double>, 4> k;
+  double nl;
+  std::complex<double> v1, v2;
+  std::complex<double> i1, i2;
+  std::complex<double> A, B;
+  std::complex<double> a, b;
+  std::array<std::complex<double>, 4> K;
+  std::complex<double> psi;
+  std::complex<double> z;
+  std::complex<double> V1, I1;
+  std::complex<double> V2, I2; // Vout, Iout
+};
