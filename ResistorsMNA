@@ -10,9 +10,10 @@
     capacitors and inductors (linear components). 
  */
 
+
 class TwoPortResistorUnitElement {
 public:
-  TwoPortResistorUnitElement(std::vector<double> resistorValues, int resistorQuantity, std::string topology) : R(resistorValues), n(resistorQuantity), t(topology) {}
+  TwoPortResistorUnitElement(std::vector<double> R, int n, std::string topology) : R(R), n(n), topology(topology), Lp(0), Cp(0) {}
   void setTransferFunction(std::complex<double> H) {
     this->H = H;
   }
@@ -23,10 +24,32 @@ public:
     this->Cp = Cp;
   }
   void setImpedance() {
-    Z = 2 * R + Lp; // Take into account the parasitic inductance
+    if (topology == "series") {
+      Z = 2 * R[0]; // Take into account the parasitic inductance
+      for (int i = 1; i < n; i++) {
+        Z += 2 * R[i];
+      }
+    } else if (topology == "parallel") {
+      Z = 1 / (2 * R[0]); // Take into account the parasitic inductance
+      for (int i = 1; i < n; i++) {
+        Z += 1 / (2 * R[i]);
+      }
+      Z = 1 / Z;
+    }
   }
   void setAdmittance() {
-    Y = 1 / (2 * R + 1 / Cp);
+    if (topology == "series") {
+      Y = 1 / (2 * R[0] + 1 / Cp); // Take into account the parasitic capacitance
+      for (int i = 1; i < n; i++) {
+        Y += 1 / (2 * R[i] + 1 / Cp);
+      }
+      Y = 1 / Y;
+    } else if (topology == "parallel") {
+      Y = 2 * R[0] + Lp; // Take into account the parasitic inductance
+      for (int i = 1; i < n; i++) {
+        Y += 2 * R[i] + Lp;
+      }
+    }
   }
   void setWaveformScatteringFunction(std::array<std::complex<double>, 4> k) {
     this->k = k;
@@ -35,22 +58,34 @@ public:
     this->nl = nl;
   }
   void setMNA(std::vector<std::vector<std::complex<double>>> &Y, std::vector<std::complex<double>> &f) {
-    // Set the admittance matrix and right-hand side vector for a two-port resistor unit element with n resistors in series
-    if (t == "series") {
-      Y[0][0] = n / R[0];
-      Y[0][1] = -1 / R[0];
-      Y[1][0] = -1 / R[0];
-      Y[1][1] = (n + 1) / R[0];
+    // Set the admittance matrix and right-hand side vector for a two-port resistor unit element with n resistors
+    if (topology == "series") {
+      Y[0][0] = 0;
+      Y[0][1] = 1 / (2 * R[0]);
+      Y[1][0] = -1 / (2 * R[0]);
+      Y[1][1] = 0;
+      for (int i = 1; i < n; i++) {
+        Y[0][0] += 1 / (2 * R[i]);
+        Y[0][1] += 1 / (2 * R[i]);
+        Y[1][0] += 1 / (2 * R[i]);
+        Y[1][1] += 1 / (2 * R[i]);
+      }
       f[0] = 0;
       f[1] = 0;
-    }
-    else if (t == "parallel") {
-      Y[0][0] = n * R[0];
-      Y[0][1] = R[0];
-      Y[1][0] = R[0];
-      Y[1][1] = R[0] + 1 / (n / R[0]);
+    } else if (topology == "parallel") {
+      Y[0][0] = 0;
+      Y[0][1] = 2 * R[0];
+      Y[1][0] = -2 * R[0];
+      Y[1][1] = 0;
+      for (int i = 1; i < n; i++) {
+        Y[0][0] += 2 * R[i];
+        Y[0][1] += 2 * R[i];
+        Y[1][0] += 2 * R[i];
+        Y[1][1] += 2 * R[i];
+      }
       f[0] = 0;
       f[1] = 0;
+   
     }
   }
   void calcInputOutputWaveforms(std::vector<std::vector<std::complex<double>>> &Y, std::vector<std::complex<double>> &f, std::vector<std::complex<double>> &x) {
@@ -59,9 +94,10 @@ public:
     v2 = x[2];
     i2 = x[3];
   }
+  // Calculate the steady-state waves, scattering and reflection functions, and transmittance
   void calcSteadyStateQuantities() {
-    A = V1 + (2 * R) * I1;
-    B = V2 - (2 * R) * I2;
+    A = V1 + (2 * Z) * I1;
+    B = V2 - (2 * Z) * I2;
     a = (A + B) / 2;
     b = (A - B) / 2;  
     K = {a, b, b, a};
@@ -70,7 +106,7 @@ public:
 private:
   std::vector<double> R;
   int n;
-  std::string t;
+  std::string topology;
   std::complex<double> H;
   double Lp;
   double Cp;
