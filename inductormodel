@@ -1,0 +1,79 @@
+#include <array>
+#include <complex>
+
+class TwoPortInductorUnitElement {
+public:
+  // Constructor
+  TwoPortInductorUnitElement(double inductance) : L(inductance), Cp(0), Rp(0) {}
+
+  // Set the transfer function
+  void setTransferFunction(std::complex<double> H) {
+    this->H = H;
+  }
+
+  // Set the parasitic capacitance
+  void setParasiticCapacitance(double Cp) {
+    this->Cp = Cp;
+  }
+
+  // Set the parasitic resistance
+  void setParasiticResistance(double Rp) {
+    this->Rp = Rp;
+  }
+
+  // Set the impedance
+  void setImpedance() {
+    Z = L * std::complex<double>(0, 1) - Rp; // Take into account the parasitic resistance
+  }
+
+  // Set the admittance
+  void setAdmittance() {
+    Y = 1 / (L * std::complex<double>(0, 1) + 1 / Cp); // Take into account the parasitic capacitance
+  }
+
+  // Set the waveform scattering function
+  void setWaveformScatteringFunction(std::array<std::complex<double>, 4> k) {
+    this->k = k;
+  }
+
+  // Set the nonlinearity coefficient
+  void setNonlinearityCoefficient(double nl) {
+    this->nl = nl;
+  }
+
+  // Calculate the input and output waveforms
+  void calcInputOutputWaveforms(std::complex<double> V2, std::complex<double> I2) {
+    v1 = k[0] * V2 - k[1] * I2;
+    i1 = k[2] * V2 - k[3] * I2;
+    v2 = v1;
+    i2 = (v2 - v1) / Z;
+  }
+
+  // Calculate the steady-state waves, scattering and reflection functions, and transmittance
+  void calcSteadyStateQuantities() {
+    A = V1 + Z * I1;
+    B = V2 - Z * I2;
+    a = (A + B) / 2;
+    b = (A - B) / 2;  
+    K = {a, b, b, a};
+    psi = (z - 1) / (z + 1);
+  }
+private:
+  double L;
+  double Cp;
+  double Rp; 
+  std::complex<double> H; 
+  double Z; 
+  double Y; 
+  std::array<std::complex<double>, 4> k; 
+  double nl; 
+  std::complex<double> v1, v2; 
+  std::complex<double> i1, i2; 
+  std::complex<double> A, B; 
+  std::complex<double> a, b; 
+  std::array<std::complex<double>, 4> K; 
+  std::complex<double> psi; 
+  std::complex<double> z; 
+  std::complex<double> V1, I1; 
+  std::complex<double> V2, I2; // Vout, Iout
+};
