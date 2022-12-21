@@ -1,0 +1,113 @@
+class TwoPortCapacitorUnitElement {
+public:
+  TwoPortCapacitorUnitElement(std::vector<double> C, int n, std::string topology) : C(C), n(n), topology(topology), Lp(0), Rp(0) {}
+  void setTransferFunction(std::complex<double> H) {
+    this->H = H;
+  }
+  void setParasiticInductance(double Lp) {
+    this->Lp = Lp;
+  }
+  void setParasiticResistance(double Rp) {
+    this->Rp = Rp;
+  }
+  void setImpedance() {
+    if (topology == "series") {
+      Z = 1 / (2 * C[0]); 
+      for (int i = 1; i < n; i++) {
+        Z += 1 / (2 * C[i]);
+      }
+      Z = 1 / Z;
+    } else if (topology == "parallel") {
+      Z = 2 * C[0] + Lp; 
+      for (int i = 1; i < n; i++) {
+        Z += 2 * C[i] + Lp;
+      }
+    }
+  }
+  void setAdmittance() {
+    if (topology == "series") {
+      Y = 2 * C[0] + Rp; 
+      for (int i = 1; i < n; i++) {
+        Y += 2 * C[i] + Rp;
+      }
+      Y = 1 / Y;
+    } else if (topology == "parallel") {
+      Y = 1 / (2 * C[0]); 
+      for (int i = 1; i < n; i++) {
+        Y += 1 / (2 * C[i]);
+      }
+      Y = 1 / Y;
+    }
+  }
+  void setWaveformScatteringFunction(std::array<std::complex<double>, 4> k) {
+    this->k = k;
+  }
+  void setNonlinearityCoefficient(double nl) {
+    this->nl = nl;
+  }
+  void setMNA(std::vector<std::vector<std::complex<double>>> &Y, std::vector<std::complex<double>> &f) {
+    // Admittance matrix and right-hand side vector for a two-port capacitor unit element with n capacitors
+    if (topology == "series") {
+      Y[0][0] = 0;
+      Y[0][1] = 2 * C[0];
+      Y[1][0] = -2 * C[0];
+      Y[1][1] = 0;
+      for (int i = 1; i < n; i++) {
+        Y[0][0] += 2 * C[i];
+        Y[0][1] += 2 * C[i];
+        Y[1][0] += 2 * C[i];
+        Y[1][1] += 2 * C[i];
+      }
+      f[0] = 0;
+      f[1] = 0;
+    } else if (topology == "parallel") {
+      Y[0][0] = 0;
+      Y[0][1] = 1 / (2 * C[0]);
+      Y[1][0] = -1 / (2 * C[0]);
+      Y[1][1] = 0;
+      for (int i = 1; i < n; i++) 
+      {
+        Y[0][0] += 1 / (2 * C[i]);
+        Y[0][1] += 1 / (2 * C[i]);
+        Y[1][0] += 1 / (2 * C[i]);
+        Y[1][1] += 1 / (2 * C[i]);
+      }
+      f[0] = 0;
+      f[1] = 0;
+    }
+  }
+  void calcInputOutputWaveforms(std::vector<std::vector<std::complex<double>>> &Y, std::vector<std::complex<double>> &f, std::vector<std::complex<double>> &x) {
+    v1 = x[0];
+    i1 = x[1];
+    v2 = x[2];
+    i2 = x[3];
+  }
+  void calcSteadyStateQuantities() {
+    A = V1 + (2 * Y) * I1;
+    B = V2 - (2 * Y) * I2;
+    a = (A + B) / 2;
+    b = (A - B) / 2;  
+    K = {a, b, b, a};
+    psi = (z - 1) / (z + 1);
+  }
+private:
+  std::vector<double> C;
+  int n;
+  std::string topology;
+  std::complex<double> H;
+  double Lp;
+  double Rp;
+  double Z;
+  double Y;
+  std::array<std::complex<double>, 4> k;
+  double nl;
+  std::complex<double> v1, v2;
+  std::complex<double> i1, i2;
+  std::complex<double> A, B;
+  std::complex<double> a, b;
+  std::array<std::complex<double>, 4> K;
+  std::complex<double> psi;
+  std::complex<double> z;
+  std::complex<double> V1, I1;
+  std::complex<double> V2, I2; // Vout, Iout
+};
