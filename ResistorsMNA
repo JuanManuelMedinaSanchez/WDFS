@@ -1,0 +1,78 @@
+class TwoPortResistorUnitElement {
+public:
+  TwoPortResistorUnitElement(std::vector<double> resistorValues, int resistorQuantity, std::string topology) : R(resistorValues), n(resistorQuantity), t(topology) {}
+  void setTransferFunction(std::complex<double> H) {
+    this->H = H;
+  }
+  void setParasiticInductance(double Lp) {
+    this->Lp = Lp;
+  }
+  void setParasiticCapacitance(double Cp) {
+    this->Cp = Cp;
+  }
+  void setImpedance() {
+    Z = 2 * R + Lp; // Take into account the parasitic inductance
+  }
+  void setAdmittance() {
+    Y = 1 / (2 * R + 1 / Cp);
+  }
+  void setWaveformScatteringFunction(std::array<std::complex<double>, 4> k) {
+    this->k = k;
+  }
+  void setNonlinearityCoefficient(double nl) {
+    this->nl = nl;
+  }
+  void setMNA(std::vector<std::vector<std::complex<double>>> &Y, std::vector<std::complex<double>> &f) {
+    // Set the admittance matrix and right-hand side vector for a two-port resistor unit element with n resistors in series
+    if (t == "series") {
+      Y[0][0] = n / R[0];
+      Y[0][1] = -1 / R[0];
+      Y[1][0] = -1 / R[0];
+      Y[1][1] = (n + 1) / R[0];
+      f[0] = 0;
+      f[1] = 0;
+    }
+    else if (t == "parallel") {
+      Y[0][0] = n * R[0];
+      Y[0][1] = R[0];
+      Y[1][0] = R[0];
+      Y[1][1] = R[0] + 1 / (n / R[0]);
+      f[0] = 0;
+      f[1] = 0;
+    }
+  }
+  void calcInputOutputWaveforms(std::vector<std::vector<std::complex<double>>> &Y, std::vector<std::complex<double>> &f, std::vector<std::complex<double>> &x) {
+    v1 = x[0];
+    i1 = x[1];
+    v2 = x[2];
+    i2 = x[3];
+  }
+  void calcSteadyStateQuantities() {
+    A = V1 + (2 * R) * I1;
+    B = V2 - (2 * R) * I2;
+    a = (A + B) / 2;
+    b = (A - B) / 2;  
+    K = {a, b, b, a};
+    psi = (z - 1) / (z + 1);
+  }
+private:
+  std::vector<double> R;
+  int n;
+  std::string t;
+  std::complex<double> H;
+  double Lp;
+  double Cp;
+  double Z;
+  double Y;
+  std::array<std::complex<double>, 4> k;
+  double nl;
+  std::complex<double> v1, v2;
+  std::complex<double> i1, i2;
+  std::complex<double> A, B;
+  std::complex<double> a, b;
+  std::array<std::complex<double>, 4> K;
+  std::complex<double> psi;
+  std::complex<double> z;
+  std::complex<double> V1, I1;
+  std::complex<double> V2, I2; // Vout, Iout
+};
