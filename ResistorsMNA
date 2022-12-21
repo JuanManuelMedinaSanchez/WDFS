@@ -9,6 +9,7 @@
     Transfer function, Z, Y and others parameters. The non-linear coefficient is 0, because the nature of behavior of resistors, 
     capacitors and inductors (linear components). 
  */
+
 class TwoPortResistorUnitElement {
 public:
   TwoPortResistorUnitElement(std::vector<double> resistorValues, int resistorQuantity, std::string topology) : R(resistorValues), n(resistorQuantity), t(topology) {}
