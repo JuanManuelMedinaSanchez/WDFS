@@ -1,3 +1,13 @@
+//==============================================================================
+/**
+    WDFComponents: TwoPortResistorUnitElement   
+-------------
+    Wave Digital electric components, based in the theory of A. Feitweiss and other source like DAFX Knowledge Created By Juan Manuel Medina for own proposes and Prismatik LAB division: DSP.Erience.**/ This Class is oriented to linear 2PN (Two Port Networks), for implementation / feedback or more info,  write to: prismatiklab@gmail.com
+-------------
+This class is a model for one resistor with the most posible WDF elements like parasites, reflection, propagation, Transfer function, Z, Y and others parameters. The non-linear coefficient is 0, because the nature of behavior of resistors, capacitors and inductors (linear components)
+ **/
+
+
 class TwoPortResistorUnitElement {
 public:
   TwoPortResistorUnitElement(double resistance, int numResistors, bool isParallel)
@@ -77,4 +87,3 @@ private:
   std::complex<double> V1, V2; // I/O Voltages
   std::complex<double> I1, I2; // I/O currents 
 };
-
