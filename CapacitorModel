@@ -1,0 +1,57 @@
+class TwoPortCapacitorUnitElement {
+public:
+  TwoPortCapacitorUnitElement(double capacitance) : C(capacitance), Lp(0), Rp(0) {}
+  void setTransferFunction(std::complex<double> H) {
+    this->H = H;
+  }
+  void setParasiticInductance(double Lp) {
+    this->Lp = Lp;
+  }
+  void setParasiticResistance(double Rp) {
+    this->Rp = Rp;
+  }
+  void setImpedance() {
+    Z = -1 / (C * std::complex<double>(0, 1)); // Take into account the parasitic inductance
+  }
+  void setAdmittance() {
+    Y = C * std::complex<double>(0, 1) / (1 + Rp * std::complex<double>(0, 1) * C); // Take into account the parasitic resistance
+  }
+  void setWaveformScatteringFunction(std::array<std::complex<double>, 4> k) {
+    this->k = k;
+  }
+  void setNonlinearityCoefficient(double nl) {
+    this->nl = nl;
+  }
+  void calcInputOutputWaveforms(std::complex<double> V2, std::complex<double> I2) {
+    v1 = k[0] * V2 - k[1] * I2;
+    i1 = k[2] * V2 - k[3] * I2;
+    v2 = v1;
+    i2 = (v2 - v1) * Y;
+  }
+  void calcSteadyStateQuantities() {
+    A = V1 + Z * I1;
+    B = V2 - Z * I2;
+    a = (A + B) / 2;
+    b = (A - B) / 2;  
+    K = {a, b, b, a};
+    psi = (z - 1) / (z + 1);
+  }
+private:
+  double C;
+  double Lp;
+  double Rp; 
+  std::complex<double> H; 
+  double Z; 
+  double Y; 
+  std::array<std::complex<double>, 4> k; 
+  double nl; 
+  std::complex<double> v1, v2; 
+  std::complex<double> i1, i2; 
+  std::complex<double> A, B; 
+  std::complex<double> a, b; 
+  std::array<std::complex<double>, 4> K; 
+  std::complex<double> psi; 
+  std::complex<double> z; 
+  std::complex<double> V1, I1; 
+  std::complex<double> V2, I2; // Vout, Iout
+};
