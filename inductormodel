@@ -1,55 +1,45 @@
-#include <array>
-#include <complex>
-
+/*
+    WDFComponents: TwoPortInductorUnitElement   
+-------------
+    Wave Digital electric components, based in the theory of A. Feitweiss and other source like DAFX Knowledge 
+    Created By Juan Manuel Medina for own proposes and Prismatik LAB division: DSP.Erience. This Class is oriented 
+    to linear 2PN (Two Port Networks), for implementation / feedback or more info,  write to: prismatiklab@gmail.com
+-------------
+    This class is a model for one inductor with the most posible WDF elements like parasites, reflection, propagation, 
+    Transfer function, Z, Y and others parameters. The non-linear coefficient is 0, because the nature of behavior of resistors, 
+    capacitors and inductors (linear components). 
+ */
+ 
 class TwoPortInductorUnitElement {
 public:
-  // Constructor
   TwoPortInductorUnitElement(double inductance) : L(inductance), Cp(0), Rp(0) {}
-
-  // Set the transfer function
   void setTransferFunction(std::complex<double> H) {
     this->H = H;
   }
-
-  // Set the parasitic capacitance
   void setParasiticCapacitance(double Cp) {
     this->Cp = Cp;
   }
-
-  // Set the parasitic resistance
   void setParasiticResistance(double Rp) {
     this->Rp = Rp;
   }
-
-  // Set the impedance
   void setImpedance() {
     Z = L * std::complex<double>(0, 1) - Rp; // Take into account the parasitic resistance
   }
-
-  // Set the admittance
   void setAdmittance() {
     Y = 1 / (L * std::complex<double>(0, 1) + 1 / Cp); // Take into account the parasitic capacitance
   }
-
-  // Set the waveform scattering function
   void setWaveformScatteringFunction(std::array<std::complex<double>, 4> k) {
     this->k = k;
   }
-
-  // Set the nonlinearity coefficient
   void setNonlinearityCoefficient(double nl) {
     this->nl = nl;
   }
-
-  // Calculate the input and output waveforms
   void calcInputOutputWaveforms(std::complex<double> V2, std::complex<double> I2) {
     v1 = k[0] * V2 - k[1] * I2;
     i1 = k[2] * V2 - k[3] * I2;
     v2 = v1;
     i2 = (v2 - v1) / Z;
   }
-
-  // Calculate the steady-state waves, scattering and reflection functions, and transmittance
   void calcSteadyStateQuantities() {
     A = V1 + Z * I1;
     B = V2 - Z * I2;
