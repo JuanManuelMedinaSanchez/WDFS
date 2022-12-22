@@ -5,4 +5,4 @@ WDFComponents: TwoPortUnitElement
     Created By Juan Manuel Medina for own proposes and Prismatik LAB division: DSP.Erience. This Class is oriented 
     to linear 2PN (Two Port Networks), for implementation / feedback or more info,  write to: prismatiklab@gmail.com
 
-    Using the method MNA (Modified Nodal Analysis) for linear circuits nodal proposes. 
+    Using the method MNA (Modified Nodal Analysis) for linear circuits nodal components. 
